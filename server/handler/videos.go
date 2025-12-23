@@ -2,22 +2,14 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
+	"go-lang-web-api/server/service"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 )
 
 func GetVideos(w http.ResponseWriter, r *http.Request) {
-	// APIキー取得
-	apiKey := os.Getenv("YOUTUBE_API_KEY")
-	if apiKey == "" {
-		http.Error(w, "API key not set", http.StatusInternalServerError)
-		return
-	}
-
 	// クエリ取得
 	// keyword
 	keyword := r.URL.Query().Get("keyword")
@@ -64,30 +56,16 @@ func GetVideos(w http.ResponseWriter, r *http.Request) {
 		sinceTime = &t
 	}
 
-	// Youtube APIのURLを取得
-	apiURL := fmt.Sprintf(
-		"https://www.googleapis.com/youtube/v3/search?part=snippet&q=%s&order=date&type=video&maxResults=%d&key=%s",
-		keywordEscaped,
-		limit,
-		apiKey,
-	)
-
-	// 2回目以降の取得の場合、URLにpublishedAfterを付与
-	if sinceTime != nil {
-		apiURL += "&publishedAfter=" + url.QueryEscape(sinceTime.Format(time.RFC3339))
-	}
-
-	// YouTube API 呼び出し
-	resp, err := http.Get(apiURL)
+	// service呼び出し
+	result, err := service.SearchLatestVideos(keywordEscaped, limit, sinceTime)
 	if err != nil {
-		http.Error(w, "failed to call youtube api", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
 
-	// レスポンスをそのまま返す（まずはここまで）
+	// レスポンスを返す
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(json.RawMessage(mustRead(resp)))
+	json.NewEncoder(w).Encode(result)
 }
 
 // レスポンスを丸ごと読む用（一時的）
