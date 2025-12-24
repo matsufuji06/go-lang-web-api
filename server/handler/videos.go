@@ -11,7 +11,10 @@ import (
 
 func GetVideos(w http.ResponseWriter, r *http.Request) {
 	// クエリ取得
+
+	// ----------
 	// keyword
+	// ----------
 	keyword := r.URL.Query().Get("keyword")
 	// 必須チェック
 	if keyword == "" {
@@ -20,7 +23,9 @@ func GetVideos(w http.ResponseWriter, r *http.Request) {
 	}
 	keywordEscaped := url.QueryEscape(keyword) // 日本語対応
 
+	// ----------
 	// limit
+	// ----------
 	limitStr := r.URL.Query().Get("limit")
 	limit := 10 // デフォルト値
 	// 必須チェック
@@ -43,11 +48,13 @@ func GetVideos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ----------
 	// since
+	// ----------
 	var sinceTime *time.Time
 	sinceStr := r.URL.Query().Get("since")
 
-	if sinceStr != "" { // 初回検索の時はnil
+	if sinceStr != "" { // 初回検索の時は空の想定
 		t, err := time.Parse(time.RFC3339, sinceStr)
 		if err != nil {
 			http.Error(w, "since must be RFC3339 format", http.StatusBadRequest)
@@ -66,12 +73,4 @@ func GetVideos(w http.ResponseWriter, r *http.Request) {
 	// レスポンスを返す
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
-}
-
-// レスポンスを丸ごと読む用（一時的）
-func mustRead(resp *http.Response) []byte {
-	var data map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&data)
-	b, _ := json.Marshal(data)
-	return b
 }

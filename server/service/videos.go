@@ -1,14 +1,14 @@
 package service
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	apiModel "go-lang-web-api/server/model/api"
-	youtubeModel "go-lang-web-api/server/model/youtube"
-	"net/http"
-	"net/url"
 	"os"
 	"time"
+
+	"google.golang.org/api/option"
+	"google.golang.org/api/youtube/v3"
 )
 
 func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.VideoResponse, error) {
@@ -18,38 +18,38 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 		return nil, fmt.Errorf("API key not set")
 	}
 
-	// YouTube API URLパラメータ組み立て
-	params := url.Values{}
-	params.Set("part", "snippet")
-	params.Set("q", keyword)
-	params.Set("order", "date")
-	params.Set("type", "video")
-	params.Set("maxResults", fmt.Sprintf("%d", limit))
-	params.Set("key", apiKey)
+	ctx := context.Background()
 
-	if since != nil {
-		params.Set("publishedAfter", since.Format(time.RFC3339))
-	}
-
-	apiURL := "https://www.googleapis.com/youtube/v3/search?" + params.Encode()
-
-	// API呼び出し
-	resp, err := http.Get(apiURL)
+	// Youtubeクライアント生成
+	youtubeService, err := youtube.NewService(
+		ctx,
+		option.WithAPIKey(apiKey),
+	)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	// YouTube API用structにデコードして詰める
-	var ytResp youtubeModel.SearchResponse
-	if err := json.NewDecoder(resp.Body).Decode(&ytResp); err != nil {
+	// リクエスト内容を生成
+	call := youtubeService.Search.
+		List([]string{"snippet"}).
+		Q(keyword).
+		Order("date").
+		Type("video").
+		MaxResults(int64(limit))
+
+	if since != nil {
+		call = call.PublishedAfter(since.Format(time.RFC3339))
+	}
+
+	ytResp, err := call.Do()
+	if err != nil {
 		return nil, err
 	}
 
+	// 自分のAPI用struct に変換
 	items := []apiModel.VideoItem{}
 	var latest time.Time
 
-	// 自分のAPI用struct に変換
 	for _, item := range ytResp.Items {
 		publishedAt, _ := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
 
@@ -60,29 +60,29 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 		}
 
 		items = append(items, apiModel.VideoItem{
-			VideoID:     item.ID.VideoID,
+			VideoID:     item.Id.VideoId,
 			Title:       item.Snippet.Title,
 			Description: item.Snippet.Description,
 			PublishedAt: item.Snippet.PublishedAt,
-			ChannelID:   item.Snippet.ChannelID,
+			ChannelID:   item.Snippet.ChannelId,
 			ChannelName: item.Snippet.ChannelTitle,
-			URL:         "https://www.youtube.com/watch?v=" + item.ID.VideoID,
+			URL:         "https://www.youtube.com/watch?v=" + item.Id.VideoId,
 			IsNew:       isNew,
 			Thumbnails: apiModel.Thumbnails{
 				Default: apiModel.Thumbnail{
-					URL:    item.Snippet.Thumbnails.Default.URL,
-					Width:  item.Snippet.Thumbnails.Default.Width,
-					Height: item.Snippet.Thumbnails.Default.Height,
+					URL:    item.Snippet.Thumbnails.Default.Url,
+					Width:  int(item.Snippet.Thumbnails.Default.Width),
+					Height: int(item.Snippet.Thumbnails.Default.Height),
 				},
 				Medium: apiModel.Thumbnail{
-					URL:    item.Snippet.Thumbnails.Medium.URL,
-					Width:  item.Snippet.Thumbnails.Medium.Width,
-					Height: item.Snippet.Thumbnails.Medium.Height,
+					URL:    item.Snippet.Thumbnails.Medium.Url,
+					Width:  int(item.Snippet.Thumbnails.Medium.Width),
+					Height: int(item.Snippet.Thumbnails.Medium.Height),
 				},
 				High: apiModel.Thumbnail{
-					URL:    item.Snippet.Thumbnails.High.URL,
-					Width:  item.Snippet.Thumbnails.High.Width,
-					Height: item.Snippet.Thumbnails.High.Height,
+					URL:    item.Snippet.Thumbnails.High.Url,
+					Width:  int(item.Snippet.Thumbnails.High.Width),
+					Height: int(item.Snippet.Thumbnails.High.Height),
 				},
 			},
 		})
@@ -100,5 +100,4 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 			LastPublishedAt: latest.Format(time.RFC3339),
 		},
 	}, nil
-
 }
