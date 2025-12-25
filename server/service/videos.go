@@ -11,14 +11,19 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
+const youtubeTimeout = 5 * time.Second
+
 func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.VideoResponse, error) {
-	// APIキー取得
+	// APIキーを取得する
 	apiKey := os.Getenv("YOUTUBE_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("API key not set")
 	}
 
-	ctx := context.Background()
+	// コンテキストを生成（設定時間以内に処理が終わらなければタイムアウト）
+	ctx, cancel := context.WithTimeout(context.Background(), youtubeTimeout)
+	// 関数終了時にキャンセルを呼び出す
+	defer cancel()
 
 	// Youtubeクライアント生成
 	youtubeService, err := youtube.NewService(
@@ -37,61 +42,20 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 		Type("video").
 		MaxResults(int64(limit))
 
+	// sinceパラメータが指定されていれば、PublishedAfterを設定する
 	if since != nil {
 		call = call.PublishedAfter(since.Format(time.RFC3339))
 	}
 
+	// APIコール実行（タイムアウトの場合、errが返る）
+	// ※日本語対応のためエスケープ処理も内部的に行われる
 	ytResp, err := call.Do()
 	if err != nil {
 		return nil, err
 	}
 
-	// 自分のAPI用struct に変換
-	items := []apiModel.VideoItem{}
-	var latest time.Time
-
-	for _, item := range ytResp.Items {
-		publishedAt, _ := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
-
-		// 前回取得した時刻（since）よりも後に公開された動画の場合
-		isNew := false
-		if since != nil && publishedAt.After(*since) {
-			isNew = true
-		}
-
-		items = append(items, apiModel.VideoItem{
-			VideoID:     item.Id.VideoId,
-			Title:       item.Snippet.Title,
-			Description: item.Snippet.Description,
-			PublishedAt: item.Snippet.PublishedAt,
-			ChannelID:   item.Snippet.ChannelId,
-			ChannelName: item.Snippet.ChannelTitle,
-			URL:         "https://www.youtube.com/watch?v=" + item.Id.VideoId,
-			IsNew:       isNew,
-			Thumbnails: apiModel.Thumbnails{
-				Default: apiModel.Thumbnail{
-					URL:    item.Snippet.Thumbnails.Default.Url,
-					Width:  int(item.Snippet.Thumbnails.Default.Width),
-					Height: int(item.Snippet.Thumbnails.Default.Height),
-				},
-				Medium: apiModel.Thumbnail{
-					URL:    item.Snippet.Thumbnails.Medium.Url,
-					Width:  int(item.Snippet.Thumbnails.Medium.Width),
-					Height: int(item.Snippet.Thumbnails.Medium.Height),
-				},
-				High: apiModel.Thumbnail{
-					URL:    item.Snippet.Thumbnails.High.Url,
-					Width:  int(item.Snippet.Thumbnails.High.Width),
-					Height: int(item.Snippet.Thumbnails.High.Height),
-				},
-			},
-		})
-
-		// 最新の投稿日時を更新する
-		if publishedAt.After(latest) {
-			latest = publishedAt
-		}
-	}
+	// YouTube APIのレスポンスを自分のAPI用のレスポンスに変換する
+	items, latest := convertItems(ytResp.Items, since)
 
 	return &apiModel.VideoResponse{
 		Items: items,
@@ -100,4 +64,71 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 			LastPublishedAt: latest.Format(time.RFC3339),
 		},
 	}, nil
+}
+
+// YouTube APIのSearchResultから自分のAPI用のVideoItemに変換する関数
+func convertItems(ytItems []*youtube.SearchResult, since *time.Time) ([]apiModel.VideoItem, time.Time) {
+	items := make([]apiModel.VideoItem, 0, len(ytItems))
+	var latest time.Time
+
+	// 各アイテムを変換
+	for _, item := range ytItems {
+		publishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
+		if err != nil {
+			continue
+		}
+
+		// sinceパラメータが指定されていれば、新着フラグを設定する
+		isNew := since != nil && publishedAt.After(*since)
+
+		// API用のVideoItemに変換
+		video := apiModel.VideoItem{
+			VideoID:     item.Id.VideoId,
+			Title:       item.Snippet.Title,
+			Description: item.Snippet.Description,
+			PublishedAt: item.Snippet.PublishedAt,
+			ChannelID:   item.Snippet.ChannelId,
+			ChannelName: item.Snippet.ChannelTitle,
+			URL:         "https://www.youtube.com/watch?v=" + item.Id.VideoId,
+			IsNew:       isNew,
+			Thumbnails:  convertThumbnails(item.Snippet.Thumbnails),
+		}
+
+		// 変換後のスライスに追加
+		items = append(items, video)
+
+		// 最新の公開日時を更新
+		if publishedAt.After(latest) {
+			latest = publishedAt
+		}
+	}
+
+	return items, latest
+}
+
+// YouTubeのThumbnailDetailsを自分のAPI用のThumbnailsに変換する関数
+func convertThumbnails(t *youtube.ThumbnailDetails) apiModel.Thumbnails {
+	// nilチェック
+	if t == nil {
+		return apiModel.Thumbnails{}
+	}
+
+	return apiModel.Thumbnails{
+		Default: toThumbnail(t.Default),
+		Medium:  toThumbnail(t.Medium),
+		High:    toThumbnail(t.High),
+	}
+}
+
+// YouTubeのThumbnailを自分のAPI用のThumbnailに変換する関数
+func toThumbnail(t *youtube.Thumbnail) apiModel.Thumbnail {
+	if t == nil {
+		return apiModel.Thumbnail{}
+	}
+
+	return apiModel.Thumbnail{
+		URL:    t.Url,
+		Width:  int(t.Width),
+		Height: int(t.Height),
+	}
 }
