@@ -1,16 +1,15 @@
 package service
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
 	"os"
-	"strconv"
+
+	"google.golang.org/api/option"
+	"google.golang.org/api/youtube/v3"
 
 	"go-lang-web-api/server/model/api"
-	"go-lang-web-api/server/model/youtube"
 )
 
 // 404と429のメッセージ
@@ -19,56 +18,65 @@ var (
 	ErrRateLimitExceeded = errors.New("rate limit exceeded") // 429
 )
 
-// チャンネルの情報を取得する関数
-func GetChannelInfo(channel string) (*api.ChannelResponse, error) {
-	// APIキーを取得
+// YouTube serviceを生成する関数
+func newYouTubeService() (*youtube.Service, error) {
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("API key not set")
 	}
 
-	// チャンネルIDを取得
-	channelId, err := getChannelId(channel, apiKey)
+	return youtube.NewService(
+		context.Background(),
+		option.WithAPIKey(apiKey),
+	)
+}
 
-	endpoint := "https://www.googleapis.com/youtube/v3/channels"
-
-	params := url.Values{}
-	params.Add("part", "snippet,statistics")
-	params.Add("id", channelId)
-	params.Add("key", apiKey)
-
-	reqURL := endpoint + "?" + params.Encode()
-
-	resp, err := http.Get((reqURL))
+// チャンネルの情報を取得する関数
+func GetChannelInfo(channel string) (*api.ChannelResponse, error) {
+	yt, err := newYouTubeService()
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	// ステータスコードを確認
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrChannelNotFound
-	}
-	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, ErrRateLimitExceeded
-	}
+	// search.list (チャンネルIDを取ってくる)
+	searchCall := yt.Search.List([]string{"snippet"}).
+		Q(channel).
+		Type("channel").
+		MaxResults(1)
 
-	var youTubeChannelsResponse youtube.YouTubeChannelsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&youTubeChannelsResponse); err != nil {
+	searchResp, err := searchCall.Do()
+	if err != nil {
+		// err の中身を見て 429 / その他 を判定
 		return nil, err
 	}
 
-	// 検索結果が空の場合
-	if len(youTubeChannelsResponse.Items) == 0 {
+	if len(searchResp.Items) == 0 {
 		return nil, ErrChannelNotFound
 	}
 
-	// 情報を取ってくる
-	title := youTubeChannelsResponse.Items[0].Snippet.Title
-	subscriberCount, _ := strconv.ParseUint(youTubeChannelsResponse.Items[0].Statistics.SubscriberCount, 10, 64)
-	viewCount, _ := strconv.ParseUint(youTubeChannelsResponse.Items[0].Statistics.ViewCount, 10, 64)
-	videoCount, _ := strconv.ParseUint(youTubeChannelsResponse.Items[0].Statistics.VideoCount, 10, 64)
-	thumbnail := youTubeChannelsResponse.Items[0].Snippet.Thumbnails.High.URL
+	channelId := searchResp.Items[0].Snippet.ChannelId
+
+	// チャンネルの情報を取ってくる
+	channelCall := yt.Channels.List([]string{"snippet", "statistics"}).
+		Id(channelId)
+
+	channelResp, err := channelCall.Do()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(channelResp.Items) == 0 {
+		return nil, ErrChannelNotFound
+	}
+
+	item := channelResp.Items[0]
+
+	// 取った情報を変数に入れる
+	title := item.Snippet.Title
+	subscriberCount := item.Statistics.SubscriberCount
+	viewCount := item.Statistics.ViewCount
+	videoCount := item.Statistics.VideoCount
+	thumbnail := item.Snippet.Thumbnails.High.Url
 	averageViews := calcAverageViews(viewCount, videoCount)
 
 	return &api.ChannelResponse{
@@ -79,48 +87,6 @@ func GetChannelInfo(channel string) (*api.ChannelResponse, error) {
 		AverageViews:    averageViews,
 		Thumbnail:       thumbnail,
 	}, nil
-}
-
-// チャンネルIDを取得する関数(この中でしか使わないため、関数名の先頭は小文字)
-func getChannelId(channel string, apiKey string) (string, error) {
-	endpoint := "https://www.googleapis.com/youtube/v3/search"
-
-	params := url.Values{}
-	params.Add("part", "snippet")
-	params.Add("q", channel)
-	params.Add("type", "channel")
-	params.Add("maxResults", "1")
-	params.Add("key", apiKey)
-
-	reqURL := endpoint + "?" + params.Encode()
-
-	resp, err := http.Get(reqURL)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// ステータスコードチェック
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("failed to call YouTube Search API")
-	}
-
-	var searchResponse youtube.YouTubeSearchResponse
-	if err := json.NewDecoder(resp.Body).Decode(&searchResponse); err != nil {
-		return "", err
-	}
-
-	// 検索結果が空の場合
-	if len(searchResponse.Items) == 0 {
-		return "", errors.New("channel not found")
-	}
-
-	channelId := searchResponse.Items[0].ID.ChannelID
-	if channelId == "" {
-		return "", errors.New("channelId is empty")
-	}
-
-	return channelId, nil
 }
 
 // 平均再生数を計算する関数
