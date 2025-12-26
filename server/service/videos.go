@@ -11,8 +11,14 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
+/*
+タイムアウト時間の定義
+*/
 const youtubeTimeout = 5 * time.Second
 
+/*
+YouTubeサービスを呼び出して動画情報を取得する関数
+*/
 func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.VideoResponse, error) {
 	// APIキーを取得する
 	apiKey := os.Getenv("YOUTUBE_API_KEY")
@@ -20,12 +26,12 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 		return nil, fmt.Errorf("API key not set")
 	}
 
-	// コンテキストを生成（設定時間以内に処理が終わらなければタイムアウト）
+	// コンテキストを生成する（設定時間以内に処理が終わらなければタイムアウト）
 	ctx, cancel := context.WithTimeout(context.Background(), youtubeTimeout)
 	// 関数終了時にキャンセルを呼び出す
 	defer cancel()
 
-	// Youtubeクライアント生成
+	// Youtubeクライアントを生成する
 	youtubeService, err := youtube.NewService(
 		ctx,
 		option.WithAPIKey(apiKey),
@@ -34,7 +40,7 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 		return nil, err
 	}
 
-	// リクエスト内容を生成
+	// リクエスト内容を生成する
 	call := youtubeService.Search.
 		List([]string{"snippet"}).
 		Q(keyword).
@@ -47,7 +53,7 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 		call = call.PublishedAfter(since.Format(time.RFC3339))
 	}
 
-	// APIコール実行（タイムアウトの場合、errが返る）
+	// APIコールを実行する（タイムアウトの場合、errが返る）
 	// ※日本語対応のためエスケープ処理も内部的に行われる
 	ytResp, err := call.Do()
 	if err != nil {
@@ -66,12 +72,14 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 	}, nil
 }
 
-// YouTube APIのSearchResultから自分のAPI用のVideoItemに変換する関数
+/*
+YouTube APIのSearchResultから自分のAPI用のVideoItemに変換する関数
+*/
 func convertItems(ytItems []*youtube.SearchResult, since *time.Time) ([]apiModel.VideoItem, time.Time) {
 	items := make([]apiModel.VideoItem, 0, len(ytItems))
 	var latest time.Time
 
-	// 各アイテムを変換
+	// 各アイテムを変換する
 	for _, item := range ytItems {
 		publishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
 		if err != nil {
@@ -94,10 +102,10 @@ func convertItems(ytItems []*youtube.SearchResult, since *time.Time) ([]apiModel
 			Thumbnails:  convertThumbnails(item.Snippet.Thumbnails),
 		}
 
-		// 変換後のスライスに追加
+		// 変換後のスライスに追加する
 		items = append(items, video)
 
-		// 最新の公開日時を更新
+		// 最新の公開日時を更新する
 		if publishedAt.After(latest) {
 			latest = publishedAt
 		}
@@ -106,7 +114,9 @@ func convertItems(ytItems []*youtube.SearchResult, since *time.Time) ([]apiModel
 	return items, latest
 }
 
-// YouTubeのThumbnailDetailsを自分のAPI用のThumbnailsに変換する関数
+/*
+YouTubeのThumbnailDetailsを自分のAPI用のThumbnailsに変換する関数
+*/
 func convertThumbnails(t *youtube.ThumbnailDetails) apiModel.Thumbnails {
 	// nilチェック
 	if t == nil {
@@ -120,8 +130,11 @@ func convertThumbnails(t *youtube.ThumbnailDetails) apiModel.Thumbnails {
 	}
 }
 
-// YouTubeのThumbnailを自分のAPI用のThumbnailに変換する関数
+/*
+YouTubeのThumbnailを自分のAPI用のThumbnailに変換する関数
+*/
 func toThumbnail(t *youtube.Thumbnail) apiModel.Thumbnail {
+	// nilチェック
 	if t == nil {
 		return apiModel.Thumbnail{}
 	}
