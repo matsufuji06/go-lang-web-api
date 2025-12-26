@@ -3,8 +3,9 @@
 
 <head>
 	<meta charset="UTF-8" />
-	<title>YouTube データAPI デモ</title>
+	<title>YouTube TrendHub</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
@@ -17,63 +18,148 @@
 		</div>
 	</nav>
 
-	<!-- Main Content -->
+	<!-- Main -->
 	<main class="container my-5">
-
-		<!-- Intro Section -->
-		<section class="mb-5">
-			<h1 class="mb-3">YouTube TrendHub</h1>
+		<!-- Intro -->
+		<section class="mb-4">
+			<h1 class="mb-2">YouTube TrendHub</h1>
 			<p class="text-muted">
-				最新動画のタイムラインやトレンド分析、チャンネル探索など、多彩な機能を提供します。
+				最新動画・国別ジャンル分析・チャンネル探索を行うデモアプリ
 			</p>
 		</section>
 
-		<!-- Search Section -->
-		<section class="card mb-4 shadow-sm">
-			<div class="card-body">
-				<form id="searchForm" class="row g-2">
-					<div class="col-md-9">
-						<input type="text" class="form-control" id="keyword" placeholder="検索キーワード（例：筋トレ、Golang）" />
-					</div>
-					<div class="col-md-3 d-grid">
-						<button class="btn btn-danger" type="submit">検索</button>
-					</div>
-				</form>
-			</div>
-		</section>
+		<!-- Tabs -->
+		<ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+			<li class="nav-item" role="presentation">
+				<button class="nav-link active" data-bs-toggle="tab" data-bs-target="#timeline-tab" type="button">
+					🕒 最新動画
+				</button>
+			</li>
+			<li class="nav-item" role="presentation">
+				<button class="nav-link" data-bs-toggle="tab" data-bs-target="#genre-tab" type="button">
+					📈 ジャンル
+				</button>
+			</li>
+			<li class="nav-item" role="presentation">
+				<button class="nav-link" data-bs-toggle="tab" data-bs-target="#channel-tab" type="button">
+					📺 チャンネル
+				</button>
+			</li>
+		</ul>
 
-		<!-- Timeline Section -->
-		<section>
-			<h4 class="mb-3">🕒 最新動画タイムライン</h4>
-			<div id="timeline" class="row gy-4">
-				<!-- 動画カードをここに動的に追加 -->
-				<div class="col-md-6 col-lg-4">
-					<div class="card h-100 shadow-sm">
-						<img src="https://via.placeholder.com/480x270" class="card-img-top" alt="動画サムネイル">
-						<div class="card-body">
-							<h5 class="card-title">動画タイトル</h5>
-							<p class="card-text text-muted">チャンネル名</p>
-							<p class="card-text small text-muted">公開日時: 2025-12-19</p>
-							<span class="badge bg-success">NEW</span>
+		<!-- Tab Contents -->
+		<div class="tab-content">
+			<!-- ========================= -->
+			<!-- Tab 1: 最新動画（テキスト検索） -->
+			<!-- ========================= -->
+			<div class="tab-pane fade show active" id="timeline-tab">
+				<!-- Search -->
+				<section class="card mb-4 shadow-sm">
+					<div class="card-body">
+						<form id="textSearchForm" class="row g-2">
+							<div class="col-md-9">
+								<input type="text" class="form-control" placeholder="検索キーワード（例：筋トレ、Golang）" />
+							</div>
+							<div class="col-md-3 d-grid">
+								<button class="btn btn-danger" type="submit">検索</button>
+							</div>
+						</form>
+					</div>
+				</section>
+
+				<!-- Result -->
+				<section>
+					<h4 class="mb-3">🕒 最新動画タイムライン</h4>
+					<div class="row gy-4">
+						<!-- Card Sample -->
+						<div class="col-md-6 col-lg-4">
+							<div class="card h-100 shadow-sm">
+								<img src="https://via.placeholder.com/480x270" class="card-img-top" alt="thumbnail" />
+								<div class="card-body">
+									<h5 class="card-title">動画タイトル</h5>
+									<p class="text-muted mb-1">チャンネル名</p>
+									<p class="small text-muted">公開日: 2025-12-19</p>
+									<span class="badge bg-success">NEW</span>
+								</div>
+							</div>
 						</div>
 					</div>
-				</div>
-				<!-- 他の動画カードも同様に追加 -->
+				</section>
 			</div>
-		</section>
+
+			<!-- ========================= -->
+			<!-- Tab 2: 国別ジャンル（セレクト） -->
+			<!-- ========================= -->
+			<div class="tab-pane fade" id="genre-tab">
+				<!-- Select -->
+				<section class="card mb-4 shadow-sm">
+					<div class="card-body">
+						<form id="trendForm" class="row g-2">
+							<div class="col-md-9">
+								<select class="form-select">
+									<option value="">国別ジャンルカテゴリを選択</option>
+									<option value="筋トレ">筋トレ</option>
+									<option value="食べ物">食べ物</option>
+									<option value="Golang">Golang</option>
+									<option value="AI">AI</option>
+								</select>
+							</div>
+							<div class="col-md-3 d-grid">
+								<button class="btn btn-danger" type="submit">表示</button>
+							</div>
+						</form>
+					</div>
+				</section>
+
+				<section>
+					<h4 class="mb-3">📈 国別ジャンル動画</h4>
+					<p class="text-muted">
+						選択されたキーワードに基づく国別ジャンル動画を表示予定
+					</p>
+				</section>
+			</div>
+
+			<!-- ========================= -->
+			<!-- Tab 3: チャンネル（テキスト検索）  -->
+			<!-- ========================= -->
+			<div class="tab-pane fade" id="channel-tab">
+				<!-- Search -->
+				<section class="card mb-4 shadow-sm">
+					<div class="card-body">
+						<form id="textSearchForm" class="row g-2">
+							<div class="col-md-9">
+								<input type="text" class="form-control" placeholder="検索キーワード（例：Hikakin TV、ぷろたん）" />
+							</div>
+							<div class="col-md-3 d-grid">
+								<button class="btn btn-danger" type="submit">検索</button>
+							</div>
+						</form>
+					</div>
+				</section>
+
+				<section>
+					<h4 class="mb-3">📺 チャンネル情報</h4>
+					<p class="text-muted">
+						検索されたチャンネル情報を表示予定
+					</p>
+				</section>
+			</div>
+		</div>
 	</main>
 
 	<!-- Footer -->
-	<footer class="bg-dark text-white py-3">
+	<footer class="bg-dark text-white py-3 mt-5">
 		<div class="container text-center">
-			<h5 class="mb-1">YouTube TrendHub</h5>
-			<p class="mb-0">最新動画、トレンド分析、チャンネル探索など、多彩な機能を提供します。</p>
-			<p class="mb-0">Powered by YouTube Data API v3</p>
+			<h6 class="mb-1">YouTube TrendHub</h6>
+			<p class="mb-0 small">
+				Powered by YouTube Data API v3
+			</p>
 		</div>
 	</footer>
 
 	<!-- Bootstrap JS -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>
