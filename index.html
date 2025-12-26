@@ -126,12 +126,12 @@
 				<!-- Search -->
 				<section class="card mb-4 shadow-sm">
 					<div class="card-body">
-						<form id="textSearchForm" class="row g-2">
+						<form id="channelSearchForm" class="row g-2">
 							<div class="col-md-9">
-								<input type="text" class="form-control" placeholder="検索キーワード（例：Hikakin TV、ぷろたん）" />
+								<input type="text" class="form-control" placeholder="検索キーワード（例：Hikakin TV、ぷろたん）" id="channel-info-query"/>
 							</div>
 							<div class="col-md-3 d-grid">
-								<button class="btn btn-danger" type="submit">検索</button>
+								<button class="btn btn-danger" type="submit" id="channel-info-search-button">検索</button>
 							</div>
 						</form>
 					</div>
@@ -139,9 +139,9 @@
 
 				<section>
 					<h4 class="mb-3">📺 チャンネル情報</h4>
-					<p class="text-muted">
-						検索されたチャンネル情報を表示予定
-					</p>
+					<div id="channel-info-container">
+						
+					</div>
 				</section>
 			</div>
 		</div>
@@ -160,6 +160,8 @@
 	<!-- Bootstrap JS -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+	<!-- チャンネル情報取得用のJS -->
+	<script src="/static/js/channel_info.js"></script>
 </body>
 
 </html>

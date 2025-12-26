@@ -9,13 +9,23 @@ import (
 )
 
 func ChannelHandler(w http.ResponseWriter, r *http.Request) {
+	// CORS対応 (これしないとうまくいかない)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	// URLからクエリの内容を取ってくる
 	query := r.URL.Query()
 	channel := query.Get("query")
 
 	// チャン名が空の場合は、400を返す
 	if channel == "" {
-		writeJSONError(w, http.StatusBadRequest, "query parameter is required")
+		writeJSONError(w, http.StatusBadRequest, "Need to enter channel name") // 400
 		return
 	} else {
 		result, err := service.GetChannelInfo(channel)
