@@ -22,6 +22,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 	regionCodes, err := service.FetchRegionCode()
 
 	if err != nil {
+		fmt.Println("FetchRegionCode error:", err)
 		util.ResponseErrorJson(
 			w,
 			http.StatusInternalServerError,
@@ -44,6 +45,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 
 	popularGenres, err := service.FetchPopularGenres(country)
 	if err != nil {
+		fmt.Println("FetchPopularGenres error:", err)
 		util.ResponseErrorJson(
 			w,
 			http.StatusInternalServerError,
@@ -54,6 +56,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 
 	categories, err := service.FetchCategories(country)
 	if err != nil {
+		fmt.Println("FetchCategories error:", err)
 		util.ResponseErrorJson(
 			w,
 			http.StatusInternalServerError,
