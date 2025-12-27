@@ -36,8 +36,25 @@ func CreateService(apiKey string) (*youtube.Service, error) {
 	return svs, nil
 }
 
+func CreateServiceWithContext(apiKey string, ctx context.Context) (*youtube.Service, error) {
+	svs, err := youtube.NewService(ctx, option.WithAPIKey(apiKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client")
+	}
+	return svs, nil
+}
+
 // 正常系レスポンス
 func ResponseJson(w http.ResponseWriter, httpStatus int, data api.Response) {
+	setCORS(w)
+	w.WriteHeader(httpStatus)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// 正常系レスポンス
+func ResponseJsonForVideos(w http.ResponseWriter, httpStatus int, data *api.VideoResponse) {
 	setCORS(w)
 	w.WriteHeader(httpStatus)
 	if err := json.NewEncoder(w).Encode(data); err != nil {

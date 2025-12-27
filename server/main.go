@@ -10,6 +10,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// レート制限ミドルウェア
 var limiter = rate.NewLimiter(1, 1)
 
 func rateLimitMiddleware(next http.Handler) http.Handler {
@@ -23,6 +24,7 @@ func rateLimitMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
+	// .envファイルの読み込み
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("ERROR loading .env:", err)
@@ -47,6 +49,7 @@ func main() {
 
 	// --- API 用 mux ---
 	apiMux := http.NewServeMux()
+	apiMux.HandleFunc("/api/v1/videos", handler.GetVideos)
 	apiMux.HandleFunc("/api/v1/analytics/genres", handler.GetTrends)
 	apiMux.HandleFunc("/api/v1/channels", handler.GetChannelInfo)
 
