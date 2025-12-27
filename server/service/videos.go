@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	apiModel "go-lang-web-api/server/model/api"
-	"os"
+	utils "go-lang-web-api/server/service/utils"
 	"time"
 
-	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
 
@@ -21,9 +20,9 @@ YouTubeサービスを呼び出して動画情報を取得する関数
 */
 func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.VideoResponse, error) {
 	// APIキーを取得する
-	apiKey := os.Getenv("YOUTUBE_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("API key not set")
+	apiKey, err := utils.GetApiKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create API key")
 	}
 
 	// コンテキストを生成する（設定時間以内に処理が終わらなければタイムアウト）
@@ -32,12 +31,9 @@ func SearchLatestVideos(keyword string, limit int, since *time.Time) (*apiModel.
 	defer cancel()
 
 	// Youtubeクライアントを生成する
-	youtubeService, err := youtube.NewService(
-		ctx,
-		option.WithAPIKey(apiKey),
-	)
+	youtubeService, err := utils.CreateServiceWithContext(apiKey, ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create service")
 	}
 
 	// リクエスト内容を生成する
