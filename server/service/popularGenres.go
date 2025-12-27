@@ -52,7 +52,7 @@ func FetchPopularGenres(regionCode string) ([]api.GenreRatio, error) {
 		}
 		genres = append(genres, api.GenreRatio{
 			CategoryID: categoryID,
-			Ratio:      float64(len(videos)) / float64(totalVideos) * 100,
+			Ratio:      float64(len(videos)) / float64(totalVideos),
 			VideoURL:   videos[:limit],
 		})
 	}
@@ -61,7 +61,7 @@ func FetchPopularGenres(regionCode string) ([]api.GenreRatio, error) {
 		return genres[i].Ratio > genres[j].Ratio
 	})
 
-	// 上位5件の人気ジャンルを返す
+	// 上位4件の人気ジャンルを返す
 	topN := 5
 	if len(genres) < topN {
 		topN = len(genres)
