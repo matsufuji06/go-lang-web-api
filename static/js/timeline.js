@@ -2,7 +2,7 @@
 // 設定
 // ================================
 const API_BASE_URL = "http://localhost:8000/api/v1/videos";
-const POLLING_INTERVAL = 300_000; // 300秒
+const POLLING_INTERVAL = 60_000; // 60秒
 
 // ================================
 // 状態
