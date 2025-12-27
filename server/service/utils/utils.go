@@ -36,8 +36,25 @@ func CreateService(apiKey string) (*youtube.Service, error) {
 	return svs, nil
 }
 
+func CreateServiceWithContext(apiKey string, ctx context.Context) (*youtube.Service, error) {
+	svs, err := youtube.NewService(ctx, option.WithAPIKey(apiKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client")
+	}
+	return svs, nil
+}
+
 // 正常系レスポンス
 func ResponseJson(w http.ResponseWriter, httpStatus int, data api.Response) {
+	setCORS(w)
+	w.WriteHeader(httpStatus)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// 正常系レスポンス
+func ResponseJsonForVideos(w http.ResponseWriter, httpStatus int, data *api.VideoResponse) {
 	setCORS(w)
 	w.WriteHeader(httpStatus)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -57,7 +74,7 @@ func ResponseErrorJson(w http.ResponseWriter, httpStatus int, err string) {
 
 // CORSを設定
 func setCORS(w http.ResponseWriter) {
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
