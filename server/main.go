@@ -1,21 +1,41 @@
 package main
 
 import (
-	"go-lang-web-api/server/handler"
+	handler "go-lang-web-api/server/handler"
+	utils "go-lang-web-api/server/service/utils"
 	"log"
 	"net/http"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/time/rate"
 )
 
+// レートリミッターの設定（1秒間に1リクエスト）
+var limiter = rate.NewLimiter(1, 1)
+
+// レート制限ミドルウェア
+func rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !limiter.Allow() {
+			utils.ResponseErrorJson(w, http.StatusTooManyRequests, "API rate limit exceeded. Please try again later")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
+	// .envファイルの読み込み
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("ERROR loading .env:", err)
 	}
 
-	// 静的ファイル(JSファイル)の配信設定
-	http.Handle(
+	// メインの mux（HTML / static 用）
+	mux := http.NewServeMux()
+
+	// 静的ファイル
+	mux.Handle(
 		"/static/",
 		http.StripPrefix(
 			"/static/",
@@ -23,12 +43,18 @@ func main() {
 		),
 	)
 
-	// index.htmlの配信設定
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// index.html
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./index.html")
 	})
 
-	http.HandleFunc("/api/v1/videos", handler.GetVideos)
-	http.ListenAndServe(":8000", nil)
+	// --- API 用 mux ---
+	apiMux := http.NewServeMux()
+	apiMux.HandleFunc("/api/v1/videos", handler.GetVideos)
+	apiMux.HandleFunc("/api/v1/analytics/genres", handler.GetTrends)
 
+	// API にだけレート制限を適用
+	mux.Handle("/api/", rateLimitMiddleware(apiMux))
+
+	http.ListenAndServe(":8000", mux)
 }
