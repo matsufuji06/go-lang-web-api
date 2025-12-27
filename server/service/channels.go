@@ -1,11 +1,8 @@
 package service
 
 import (
-	"context"
 	"errors"
-
-	"google.golang.org/api/option"
-	"google.golang.org/api/youtube/v3"
+	"fmt"
 
 	"go-lang-web-api/server/model/api"
 
@@ -18,28 +15,22 @@ var (
 	ErrRateLimitExceeded = errors.New("rate limit exceeded") // 429
 )
 
-// YouTube serviceを生成する関数
-func newYouTubeService() (*youtube.Service, error) {
+// チャンネルの情報を取得する関数
+func FetchChannelInfo(channel string) (*api.ChannelResponse, error) {
+	// APIキーの作成
 	apiKey, err := utils.GetApiKey()
 	if err != nil {
 		return nil, err
 	}
 
-	return youtube.NewService(
-		context.Background(),
-		option.WithAPIKey(apiKey),
-	)
-}
-
-// チャンネルの情報を取得する関数
-func FetchChannelInfo(channel string) (*api.ChannelResponse, error) {
-	yt, err := newYouTubeService()
+	// サービスの作成
+	service, err := utils.CreateService(apiKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create service")
 	}
 
 	// search.list (チャンネルIDを取ってくる)
-	searchCall := yt.Search.List([]string{"snippet"}).
+	searchCall := service.Search.List([]string{"snippet"}).
 		Q(channel).
 		Type("channel").
 		MaxResults(1)
@@ -57,7 +48,7 @@ func FetchChannelInfo(channel string) (*api.ChannelResponse, error) {
 	channelId := searchResp.Items[0].Snippet.ChannelId
 
 	// チャンネルの情報を取ってくる
-	channelCall := yt.Channels.List([]string{"snippet", "statistics"}).
+	channelCall := service.Channels.List([]string{"snippet", "statistics"}).
 		Id(channelId)
 
 	channelResp, err := channelCall.Do()
