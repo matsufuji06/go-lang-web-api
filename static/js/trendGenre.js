@@ -22,7 +22,7 @@ document.addEventListener('click', (e) => {
       renderVideos(data.genres);
     })
     .catch(err => {
-      alert(err.message);
+      alert("動画の取得に失敗しました");
       console.error(err)
     });
 })
