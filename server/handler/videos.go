@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
+	"fmt"
 	"go-lang-web-api/server/service"
+	utils "go-lang-web-api/server/service/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,27 +35,42 @@ func GetVideos(w http.ResponseWriter, r *http.Request) {
 	// limitパラメータを取得する
 	limit, err := parseLimit(query.Get("limit"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Println("parseLimit error:", err)
+		utils.ResponseErrorJson(
+			w,
+			http.StatusBadRequest,
+			"Invalid limit parameter",
+		)
 		return
 	}
 
 	// sinceパラメータを取得する（ポーリング時のみ取得される想定）
 	since, err := parseSince(query.Get("since"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		// http.Error(w, err.Error(), http.StatusBadRequest)
+		fmt.Println("parseSince error:", err)
+		utils.ResponseErrorJson(
+			w,
+			http.StatusBadRequest,
+			"Invalid since parameter",
+		)
 		return
 	}
 
 	// 動画情報を取得する
 	result, err := service.SearchLatestVideos(keyword, limit, since)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Println("SearchLatestVideos error:", err)
+		utils.ResponseErrorJson(
+			w,
+			http.StatusInternalServerError,
+			"An unexpected error occurred on the server.",
+		)
 		return
 	}
 
 	// 動画情報をJSON形式でレスポンスとして返す
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	utils.ResponseJsonForVideos(w, http.StatusOK, result)
 }
 
 /*
