@@ -45,6 +45,14 @@ func ResponseJson(w http.ResponseWriter, httpStatus int, data api.Response) {
 	}
 }
 
+func ResponseJsonChannel(w http.ResponseWriter, httpStatus int, data api.ChannelResponse) {
+	setCORS(w)
+	w.WriteHeader(httpStatus)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
 // 異常系（エラー発生時）レスポンス
 func ResponseErrorJson(w http.ResponseWriter, httpStatus int, err string) {
 	setCORS(w)
@@ -57,7 +65,7 @@ func ResponseErrorJson(w http.ResponseWriter, httpStatus int, err string) {
 
 // CORSを設定
 func setCORS(w http.ResponseWriter) {
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }

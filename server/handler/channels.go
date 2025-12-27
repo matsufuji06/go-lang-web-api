@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -33,7 +32,6 @@ func GetChannelInfo(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// レスポンスを返す
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		utils.ResponseJsonChannel(w, http.StatusOK, *result)
 	}
 }
