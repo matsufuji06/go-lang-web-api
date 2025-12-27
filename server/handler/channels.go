@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"go-lang-web-api/server/service"
+	"go-lang-web-api/server/service/utils"
 )
 
 func GetChannelInfo(w http.ResponseWriter, r *http.Request) {
@@ -15,18 +16,18 @@ func GetChannelInfo(w http.ResponseWriter, r *http.Request) {
 
 	// チャン名が空の場合は、400を返す
 	if channel == "" {
-		writeJSONError(w, http.StatusBadRequest, "Need to enter channel name") // 400
+		utils.ResponseErrorJson(w, http.StatusBadRequest, "Need to enter channel name") // 400
 		return
 	} else {
 		result, err := service.FetchChannelInfo(channel)
 		if err != nil {
 			switch {
 			case errors.Is(err, service.ErrChannelNotFound):
-				writeJSONError(w, http.StatusNotFound, "Channel not found") // 404
+				utils.ResponseErrorJson(w, http.StatusNotFound, "Channel not found") // 404
 			case errors.Is(err, service.ErrRateLimitExceeded):
-				writeJSONError(w, http.StatusTooManyRequests, "Request limit exceeded") // 429
+				utils.ResponseErrorJson(w, http.StatusTooManyRequests, "Request limit exceeded") // 429
 			default:
-				writeJSONError(w, http.StatusInternalServerError, "Internal server error") // 500
+				utils.ResponseErrorJson(w, http.StatusInternalServerError, "Internal server error") // 500
 			}
 			return
 		}
@@ -35,18 +36,4 @@ func GetChannelInfo(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	}
-}
-
-// エラーのレスポンスを作る関数
-func writeJSONError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(ErrorResponse{
-		Message: message,
-	})
-}
-
-// エラー用のstruct
-type ErrorResponse struct {
-	Message string `json:"message"`
 }
