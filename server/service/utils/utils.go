@@ -62,6 +62,14 @@ func ResponseJsonForVideos(w http.ResponseWriter, httpStatus int, data *api.Vide
 	}
 }
 
+func ResponseJsonChannel(w http.ResponseWriter, httpStatus int, data api.ChannelResponse) {
+	setCORS(w)
+	w.WriteHeader(httpStatus)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
 // 異常系（エラー発生時）レスポンス
 func ResponseErrorJson(w http.ResponseWriter, httpStatus int, err string) {
 	setCORS(w)

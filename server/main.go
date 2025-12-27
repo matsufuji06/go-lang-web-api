@@ -10,10 +10,9 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// レートリミッターの設定（1秒間に1リクエスト）
+// レート制限ミドルウェア
 var limiter = rate.NewLimiter(1, 1)
 
-// レート制限ミドルウェア
 func rateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !limiter.Allow() {
@@ -52,6 +51,7 @@ func main() {
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("/api/v1/videos", handler.GetVideos)
 	apiMux.HandleFunc("/api/v1/analytics/genres", handler.GetTrends)
+	apiMux.HandleFunc("/api/v1/channels", handler.GetChannelInfo)
 
 	// API にだけレート制限を適用
 	mux.Handle("/api/", rateLimitMiddleware(apiMux))
