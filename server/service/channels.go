@@ -3,13 +3,13 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
-	"os"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 
 	"go-lang-web-api/server/model/api"
+
+	utils "go-lang-web-api/server/service/utils"
 )
 
 // 404と429のメッセージ
@@ -20,9 +20,9 @@ var (
 
 // YouTube serviceを生成する関数
 func newYouTubeService() (*youtube.Service, error) {
-	apiKey := os.Getenv("YOUTUBE_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("API key not set")
+	apiKey, err := utils.GetApiKey()
+	if err != nil {
+		return nil, err
 	}
 
 	return youtube.NewService(
