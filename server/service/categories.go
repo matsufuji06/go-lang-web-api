@@ -21,7 +21,7 @@ func FetchCategories(regionCode string) (map[string]string, error) {
 	}
 
 	// ビデオカテゴリ取得
-	req := service.VideoCategories.List([]string{"snippet"}).RegionCode(regionCode)
+	req := service.VideoCategories.List([]string{"snippet"}).RegionCode(regionCode).Hl("ja")
 
 	res, err := req.Do()
 	if err != nil {
