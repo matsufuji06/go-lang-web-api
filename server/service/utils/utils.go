@@ -1,4 +1,4 @@
-package util
+package utils
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func GetApiKey() (string, error) {
 		return "", err
 	}
 
-	apiKey := os.Getenv("API_KEY")
+	apiKey := os.Getenv("YOUTUBE_API_KEY")
 	if apiKey == "" {
 		return "", fmt.Errorf("API key not set")
 	}

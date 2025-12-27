@@ -4,7 +4,7 @@ import (
 	"fmt"
 	api "go-lang-web-api/server/model/api"
 	service "go-lang-web-api/server/service"
-	util "go-lang-web-api/server/service/util"
+	utils "go-lang-web-api/server/service/utils"
 	"net/http"
 )
 
@@ -23,7 +23,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("FetchRegionCode error:", err)
-		util.ResponseErrorJson(
+		utils.ResponseErrorJson(
 			w,
 			http.StatusInternalServerError,
 			"An unexpected error occurred on the server.",
@@ -35,7 +35,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("regionCode exists. The code is %#v", country)
 
 	} else {
-		util.ResponseErrorJson(
+		utils.ResponseErrorJson(
 			w,
 			http.StatusForbidden,
 			"YouTube is not available in the selected country.",
@@ -46,7 +46,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 	popularGenres, err := service.FetchPopularGenres(country)
 	if err != nil {
 		fmt.Println("FetchPopularGenres error:", err)
-		util.ResponseErrorJson(
+		utils.ResponseErrorJson(
 			w,
 			http.StatusInternalServerError,
 			"An unexpected error occurred on the server.",
@@ -57,7 +57,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 	categories, err := service.FetchCategories(country)
 	if err != nil {
 		fmt.Println("FetchCategories error:", err)
-		util.ResponseErrorJson(
+		utils.ResponseErrorJson(
 			w,
 			http.StatusInternalServerError,
 			"An unexpected error occurred on the server.",
@@ -76,7 +76,7 @@ func GetTrends(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
-	util.ResponseJson(
+	utils.ResponseJson(
 		w,
 		http.StatusOK,
 		api.Response{

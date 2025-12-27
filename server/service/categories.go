@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	util "go-lang-web-api/server/service/util"
+	utils "go-lang-web-api/server/service/utils"
 )
 
 // ビデオのカテゴリを取得
@@ -10,12 +10,12 @@ func FetchCategories(regionCode string) (map[string]string, error) {
 
 	categoriesCodes := make(map[string]string)
 // APIキー作成
-	apiKey, err := util.GetApiKey()
+	apiKey, err := utils.GetApiKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create API key")
 	}
 	// サービス作成
-	service, err := util.CreateService(apiKey)
+	service, err := utils.CreateService(apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create service")
 	}

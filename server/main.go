@@ -4,13 +4,13 @@ import (
 	handler "go-lang-web-api/server/handler"
 	"net/http"
 	"golang.org/x/time/rate"
-		util "go-lang-web-api/server/service/util"
+		utils "go-lang-web-api/server/service/utils"
 )
 var limiter = rate.NewLimiter(1, 1) 
 func rateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !limiter.Allow() {
-			util.ResponseErrorJson(w, http.StatusTooManyRequests,"API rate limit exceeded. Please try again later" )
+			utils.ResponseErrorJson(w, http.StatusTooManyRequests,"API rate limit exceeded. Please try again later" )
 			return
 		}
 		next.ServeHTTP(w, r)
