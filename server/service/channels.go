@@ -20,7 +20,7 @@ var (
 
 // YouTube serviceを生成する関数
 func newYouTubeService() (*youtube.Service, error) {
-	apiKey := os.Getenv("API_KEY")
+	apiKey := os.Getenv("YOUTUBE_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("API key not set")
 	}

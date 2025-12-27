@@ -9,16 +9,6 @@ import (
 )
 
 func ChannelHandler(w http.ResponseWriter, r *http.Request) {
-	// CORS対応 (これしないとうまくいかない)
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	// URLからクエリの内容を取ってくる
 	query := r.URL.Query()
 	channel := query.Get("query")
