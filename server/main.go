@@ -32,7 +32,7 @@ func main() {
 
 	// index.html
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "go-lang-web-api/index.html")
+		http.ServeFile(w, r, "./index.html")
 	})
 
 	// --- API 用 mux ---
