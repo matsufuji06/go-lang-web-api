@@ -12,10 +12,6 @@ type Genre struct {
 }
 
 
-type ErrorResponse struct {
-	Message string `json:"message"`
-}
-
 type GenreRatio struct {
 	CategoryID string  `json:"categoryID"`
 	Ratio      float64 `json:"ratio"`
