@@ -8,7 +8,7 @@ import (
 	"go-lang-web-api/server/service"
 )
 
-func ChannelHandler(w http.ResponseWriter, r *http.Request) {
+func GetChannelInfo(w http.ResponseWriter, r *http.Request) {
 	// URLからクエリの内容を取ってくる
 	query := r.URL.Query()
 	channel := query.Get("query")
@@ -18,7 +18,7 @@ func ChannelHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "Need to enter channel name") // 400
 		return
 	} else {
-		result, err := service.GetChannelInfo(channel)
+		result, err := service.FetchChannelInfo(channel)
 		if err != nil {
 			switch {
 			case errors.Is(err, service.ErrChannelNotFound):

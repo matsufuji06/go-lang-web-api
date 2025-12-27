@@ -30,7 +30,7 @@ func main() {
 	})
 
 	fmt.Println("Server is running!")
-	http.HandleFunc("/api/v1/channels", handler.ChannelHandler)
+	http.HandleFunc("/api/v1/channels", handler.GetChannelInfo)
 	http.ListenAndServe(":8000", nil)
 
 }

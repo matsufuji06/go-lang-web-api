@@ -32,7 +32,7 @@ func newYouTubeService() (*youtube.Service, error) {
 }
 
 // チャンネルの情報を取得する関数
-func GetChannelInfo(channel string) (*api.ChannelResponse, error) {
+func FetchChannelInfo(channel string) (*api.ChannelResponse, error) {
 	yt, err := newYouTubeService()
 	if err != nil {
 		return nil, err
